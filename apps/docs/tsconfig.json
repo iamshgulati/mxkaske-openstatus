@@ -1,11 +1,6 @@
 {
-  "extends": "tsconfig/nextjs.json",
+  "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
-    "baseUrl": ".",
-    "plugins": [{ "name": "next" }],
-    "strictNullChecks": true,
-    "strict": true
-  },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+    "types": ["unplugin-icons/types/astro"]
+  }
 }

@@ -3,13 +3,18 @@ import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
-import { ClerkProvider } from "@clerk/nextjs";
-import { Analytics } from "@vercel/analytics/react";
-import PlausibleProvider from "next-plausible";
 
+import { Toaster } from "@/components/ui/sonner";
+
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
-import { Toaster } from "@/components/ui/toaster";
-import { ClientAnalytics } from "./_components/analytics";
+import { ThemeProvider } from "@/components/theme-provider";
+import { TRPCReactQueryProvider } from "@/trpc/rq-client";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import Background from "./_components/background";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -19,25 +24,13 @@ const calSans = LocalFont({
   variable: "--font-calsans",
 });
 
-const TITLE = "OpenStatus";
-const DESCRIPTION =
-  "Open-Source alternative to your current status page and monitoring service.";
-
 export const metadata: Metadata = {
-  title: TITLE,
-  description: DESCRIPTION,
-  metadataBase: new URL("https://www.openstatus.dev"),
+  ...defaultMetadata,
   twitter: {
-    images: [`/api/og`],
-    card: "summary_large_image",
-    title: TITLE,
-    description: DESCRIPTION,
+    ...twitterMetadata,
   },
   openGraph: {
-    type: "website",
-    images: [`/api/og`],
-    title: TITLE,
-    description: DESCRIPTION,
+    ...ogMetadata,
   },
 };
 
@@ -46,20 +39,24 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // If you want to develop locally without Clerk,  Comment the provider below
   return (
-    <html lang="en">
-      {/* TODO: remove plausible from root layout (to avoid tracking subdomains) */}
-      <PlausibleProvider domain="openstatus.dev">
-        <ClerkProvider>
-          <body className={`${inter.className} ${calSans.variable}`}>
-            <Background>{children}</Background>
-            <Toaster />
-            <TailwindIndicator />
-          </body>
-        </ClerkProvider>
-      </PlausibleProvider>
-      <ClientAnalytics />
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${
+          inter.className
+          // biome-ignore lint/nursery/useSortedClasses: <explanation>
+        } ${calSans.variable}`}
+      >
+        <NuqsAdapter>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+            <TRPCReactQueryProvider>
+              <Background>{children}</Background>
+              <Toaster richColors closeButton />
+              <TailwindIndicator />
+            </TRPCReactQueryProvider>
+          </ThemeProvider>
+        </NuqsAdapter>
+      </body>
     </html>
   );
 }

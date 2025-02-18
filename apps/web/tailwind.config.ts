@@ -1,9 +1,17 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { fontFamily } = require("tailwindcss/defaultTheme");
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
-  content: ["src/**/*.{ts,tsx}"],
+  content: [
+    "src/**/*.{ts,tsx}",
+    // our vercel integration
+    "../../packages/integrations/**/*.{ts,tsx}",
+    "../../packages/ui/**/*.{ts,tsx}",
+    "../../packages/tracker/**/*.{ts,tsx}",
+    "./node_modules/@openstatus/react/**/*.{js,ts,jsx,tsx}",
+  ],
   theme: {
     container: {
       center: true,
@@ -51,10 +59,25 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        /* Status Tracker */
+        status: {
+          operational: {
+            DEFAULT: "hsl(var(--status-operational))",
+          },
+          degraded: {
+            DEFAULT: "hsl(var(--status-degraded))",
+          },
+          down: {
+            DEFAULT: "hsl(var(--status-down))",
+          },
+          monitoring: {
+            DEFAULT: "hsl(var(--status-monitoring))",
+          },
+        },
       },
       borderRadius: {
-        lg: `var(--radius)`,
-        md: `calc(var(--radius) - 2px)`,
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
@@ -77,5 +100,9 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
+  plugins: [
+    require("tailwindcss-animate"),
+    require("@tailwindcss/container-queries"),
+    require("@tailwindcss/typography"),
+  ],
 };

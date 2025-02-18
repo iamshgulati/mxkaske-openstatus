@@ -1,46 +1,22 @@
-import * as React from "react";
-import type { Metadata } from "next";
-
-import { Shell } from "@/components/dashboard/shell";
-import { BackButton } from "@/components/layout/back-button";
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
 import { MarketingLayout } from "@/components/layout/marketing-layout";
-
-const TITLE = "OpenStatus";
-const DESCRIPTION =
-  "Open-Source alternative to your current monitoring service with beautiful status page";
+import type { Metadata } from "next";
+import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: TITLE,
-  description: DESCRIPTION,
-  metadataBase: new URL("https://www.openstatus.dev"),
+  ...defaultMetadata,
   twitter: {
-    images: [`/api/og?monitorId=openstatus`],
-    card: "summary_large_image",
-    title: TITLE,
-    description: DESCRIPTION,
+    ...twitterMetadata,
   },
   openGraph: {
-    type: "website",
-    images: [`/api/og?monitorId=openstatus`],
-    title: TITLE,
-    description: DESCRIPTION,
+    ...ogMetadata,
   },
 };
 
-export default function PlayLayout({
-  children,
-  modal,
-}: {
-  children: React.ReactNode;
-  modal: React.ReactNode;
-}) {
-  return (
-    <MarketingLayout>
-      <BackButton href="/" />
-      <Shell>
-        {children}
-        {modal}
-      </Shell>
-    </MarketingLayout>
-  );
+export default function PlayLayout({ children }: { children: ReactNode }) {
+  return <MarketingLayout>{children}</MarketingLayout>;
 }

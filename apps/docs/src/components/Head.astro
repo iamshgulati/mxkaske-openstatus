@@ -1,0 +1,20 @@
+---
+import Default from "@astrojs/starlight/components/Head.astro";
+
+const title = Astro.locals.starlightRoute.title;
+const { siteTitle } = Astro.locals.starlightRoute;
+console.log(Astro.locals);
+
+const url = `https://openstatus.dev/api/og?title=${siteTitle}&description=${title}`;
+---
+<Default><slot /></Default>
+
+<meta property="og:image" content={url} />
+<meta name="twitter:image" content={url} />
+
+
+<script is:inline defer data-domain="docs.openstatus.dev" src="https://plausible.io/js/script.js" />
+
+<!-- REMINDER: prevent unexpected font flashes for our 'OpenStatus' logo on each page load -->
+<link rel="preload" href="/fonts/CalSans-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
+<script defer async src="https://buttons.github.io/buttons.js" />

@@ -1,68 +1,94 @@
-import type { Metadata } from "next";
+import { subDays } from "date-fns";
 import { notFound } from "next/navigation";
 
+import { EmptyState } from "@/components/dashboard/empty-state";
 import { Header } from "@/components/dashboard/header";
-import { Shell } from "@/components/dashboard/shell";
-import { IncidentList } from "@/components/status-page/incident-list";
+import { Feed } from "@/components/status-page/feed";
 import { MonitorList } from "@/components/status-page/monitor-list";
+import { StatusCheck } from "@/components/status-page/status-check";
 import { api } from "@/trpc/server";
+import { Separator } from "@openstatus/ui";
+
+/**
+ * Right now, we do not allow workspaces to have a custom lookback period.
+ * If we decide to allow this in the future, we should move this to the database.
+ */
+const WORKSPACES =
+  process.env.WORKSPACES_LOOKBACK_30?.split(",").map(Number) || [];
 
 type Props = {
-  params: { domain: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: Promise<{ domain: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export default async function Page({ params }: Props) {
-  // We should fetch the the monitors and incident here
-  // also the page information
-  if (!params.domain) return notFound();
+export const revalidate = 0;
+
+export default async function Page(props: Props) {
+  const params = await props.params;
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
-  if (!page) {
-    return notFound();
-  }
+  if (!page) return notFound();
+
+  const lastMaintenances = page.maintenances.filter((maintenance) => {
+    return maintenance.from.getTime() > subDays(new Date(), 7).getTime();
+  });
+
+  const lastStatusReports = page.statusReports.filter((report) => {
+    return report.statusReportUpdates.some(
+      (update) => update.date.getTime() > subDays(new Date(), 7).getTime(),
+    );
+  });
+
   return (
-    <Shell>
-      <div className="grid gap-6">
-        <Header
-          title={page.title}
-          description={page.description}
-          className="mx-auto max-w-lg lg:mx-auto"
+    <div className="mx-auto flex w-full flex-col gap-12">
+      <Header
+        title={page.title}
+        description={page.description}
+        className="text-left"
+      />
+      <StatusCheck
+        statusReports={page.statusReports}
+        incidents={page.incidents}
+        maintenances={page.maintenances}
+      />
+      {page.monitors.length ? (
+        <MonitorList
+          monitors={page.monitors}
+          statusReports={page.statusReports}
+          incidents={page.incidents}
+          maintenances={page.maintenances}
+          showMonitorValues={!!page.showMonitorValues}
+          totalDays={WORKSPACES.includes(page.workspaceId) ? 30 : 45}
         />
-        {/* Think of having a tab to switch between monitors and incidents? */}
-        <MonitorList monitors={page.monitors} />
-        <IncidentList incidents={page.incidents} monitors={page.monitors} />
-      </div>
-    </Shell>
+      ) : (
+        <EmptyState
+          icon="activity"
+          title="No monitors"
+          description="The status page has no connected monitors."
+        />
+      )}
+      <Separator />
+      {lastStatusReports.length || lastMaintenances.length ? (
+        <Feed
+          monitors={page.monitors}
+          maintenances={lastMaintenances.filter((maintenance) => {
+            return (
+              maintenance.from.getTime() > subDays(new Date(), 7).getTime()
+            );
+          })}
+          statusReports={lastStatusReports.filter((report) => {
+            return report.statusReportUpdates.some(
+              (update) =>
+                update.date.getTime() > subDays(new Date(), 7).getTime(),
+            );
+          })}
+        />
+      ) : (
+        <EmptyState
+          icon="newspaper"
+          title="No recent notices"
+          description="There have been no reports within the last 7 days."
+        />
+      )}
+    </div>
   );
-}
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const page = await api.page.getPageBySlug.query({ slug: params.domain });
-  const firstMonitor = page?.monitors?.[0]; // temporary solution
-
-  return {
-    title: page?.title,
-    description: page?.description,
-    icons: page?.icon,
-    twitter: {
-      images: [
-        `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
-          page?.description || `The ${page?.title} status page}`
-        }`,
-      ],
-      card: "summary_large_image",
-      title: page?.title,
-      description: page?.description,
-    },
-    openGraph: {
-      type: "website",
-      images: [
-        `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
-          page?.description || `The ${page?.title} status page}`
-        }`,
-      ],
-      title: page?.title,
-      description: page?.description,
-    },
-  };
 }
